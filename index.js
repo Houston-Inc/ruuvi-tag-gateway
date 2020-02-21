@@ -85,8 +85,8 @@ const unixServer = net.createServer(socket => {
             pressure: telemetry.sensors.pressure,
             time: new Date().toISOString()
         };
-        const isDeviceRegistered = devices.find(a => a.address === obj.address);
-        if(!isDeviceRegistered) {
+        const alreadyDiscoveredDevice = devices.find(a => a.address === obj.address);
+        if(!alreadyDiscoveredDevice) {
             const deviceRegistrationObj = {
                 edgeDeviceId: currentEdgeDeviceId,
                 address: telemetry.device.address
@@ -98,6 +98,13 @@ const unixServer = net.createServer(socket => {
             const data = JSON.stringify(deviceRegistrationObj);
             const msg = new message(data);
             msg.properties.add("type", "device-registration");
+            client.sendEvent(msg, printResultFor("send"));
+        }
+
+        if(alreadyDiscoveredDevice && alreadyDiscoveredDevice.status === "REGISTERED") {
+            const data = JSON.stringify(obj);
+            const msg = new message(data);
+            msg.properties.add("type", "telemetry");
             client.sendEvent(msg, printResultFor("send"));
         }
     });
