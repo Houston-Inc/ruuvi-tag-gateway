@@ -92,6 +92,9 @@ const unixServer = net.createServer(socket => {
             time: new Date().toISOString()
         };
         const alreadyDiscoveredDevice = devices.find(a => a.address === obj.address);
+        console.log('DEVICES !!! ', devices);
+        console.log('alreadyDiscoveredDevice ****!!!**** ', alreadyDiscoveredDevice);
+
         if(!alreadyDiscoveredDevice) {
             const deviceRegistrationObj = {
                 edgeDeviceId: currentEdgeDeviceId,
