@@ -35,6 +35,7 @@ const printError = err => {
 
 const handleMessage = iotHubMsg => {
     const attemptedDeviceRegistration = iotHubMsg.applicationProperties.type === 'DeviceRegistrationAttempted';
+    console.log('handleMessage attemptedDeviceRegistration', attemptedDeviceRegistration);
     const { edgeDeviceId, deviceTwin, wasSuccessful, message, registrationId } = iotHubMsg.body;
 
     if (attemptedDeviceRegistration && edgeDeviceId === currentEdgeDeviceId) {
@@ -77,7 +78,12 @@ EventHubClient.createFromIotHubConnectionString(c2DConnectionString)
 
 const unixServer = net.createServer(socket => {
     socket.on("data", function(data) {
-        let telemetry = JSON.parse(data.toString());
+        let telemetry;
+        try {
+            telemetry= JSON.parse(data.toString());
+        } catch (ex) {
+            return;
+        }
         const obj = {
             address: telemetry.device.address,
             temperature: telemetry.sensors.temperature,
