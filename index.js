@@ -96,6 +96,7 @@ const unixServer = net.createServer(socket => {
         console.log('alreadyDiscoveredDevice ****!!!**** ', alreadyDiscoveredDevice);
 
         if(!alreadyDiscoveredDevice) {
+            console.log('IS IT REGISTRING AGAIN AND AGAIN');
             const deviceRegistrationObj = {
                 edgeDeviceId: currentEdgeDeviceId,
                 address: telemetry.device.address
