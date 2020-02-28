@@ -169,7 +169,7 @@ const unixServer = net.createServer(socket => {
             registrationRequestRetry(deviceRegistrationObj);
             
         }
-        /*
+        
         if(alreadyDiscoveredDevice && alreadyDiscoveredDevice.status === "WAITING") {
             
             console.log('in the fix for WAITING devices');
@@ -187,7 +187,7 @@ const unixServer = net.createServer(socket => {
                 return acc;
             }, []);
             console.log('DEVICES ARRAY ', devices);
-        }*/
+        }
         /*
         if(alreadyDiscoveredDevice && alreadyDiscoveredDevice.status === "REGISTERED") {
             const data = JSON.stringify(obj);
