@@ -141,6 +141,7 @@ const unixServer = net.createServer(socket => {
         } catch (ex) {
             return;
         }
+        console.log('Telemetry device address ', telemetry.device.address);
         const obj = {
             address: telemetry.device.address,
             temperature: telemetry.sensors.temperature,
