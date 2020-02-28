@@ -186,7 +186,7 @@ const unixServer = net.createServer(socket => {
                 acc.push(curr);
                 return acc;
             }, []);
-            console.log('DEVICES ARRAY ', acc);
+            console.log('DEVICES ARRAY ', devices);
         }
 
         if(alreadyDiscoveredDevice && alreadyDiscoveredDevice.status === "REGISTERED") {
