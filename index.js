@@ -40,54 +40,6 @@ const printError = err => {
     console.log(err.message);
 };
 
-
-/**
- * 
- * 
- * var events = require('events');
-
-function Updater(time) {
-    this.time = time;
-    this.array = [
-        {number: 1},
-        {number: 2}
-    ];
-    var that;
-    events.EventEmitter.call(this);
-
-    this.init = function()
-    {
-        that = this;
-        console.log("Contructor");
-        //Start interval
-        setInterval(that.run,that.time);
-    };
-
-    this.run = function()
-    {
-        that.array.forEach(function (item) {
-           if(item.number === 2)
-           {
-               that.emit('Event');
-           }
-        });
-    };
-}
-
-Updater.prototype.__proto__ = events.EventEmitter.prototype;
-
-module.exports = Updater;
-
-server.js:
-
-var Updater = require('./UpdaterEvent');
-
-var u = new Updater(10000);
-u.init();
-u.on('Event',function () {
-   console.log("Event catched!");
-});
- */
 const handleMessage = iotHubMsg => {
     const attemptedDeviceRegistration = iotHubMsg.applicationProperties.type === 'DeviceRegistrationAttempted';
     console.log('handleMessage attemptedDeviceRegistration', attemptedDeviceRegistration);
@@ -150,25 +102,19 @@ const unixServer = net.createServer(socket => {
             time: new Date().toISOString()
         };
         const alreadyDiscoveredDevice = devices.find(a => a.address === obj.address);
-        //console.log('DEVICES !!! ', devices);
-        //console.log('alreadyDiscoveredDevice ****!!!**** ', alreadyDiscoveredDevice);
-        const deviceRegistrationObj = {
+         const deviceRegistrationObj = {
             edgeDeviceId: currentEdgeDeviceId,
             address: telemetry.device.address
         };
-        if(!alreadyDiscoveredDevice) {
-            //console.log('IS IT REGISTRING AGAIN AND AGAIN');
-            
+        if(!alreadyDiscoveredDevice) {            
             const device = {
                 status: 'WAITING',
                 address: telemetry.device.address,
                 countDownToRetry : 6,   
             }
             devices.push(device);
-
             // for the device we have to wait 15 seconds to see the status and if its WAITING then RETRY
             registrationRequestRetry(deviceRegistrationObj);
-            
         }
         
         if(alreadyDiscoveredDevice && alreadyDiscoveredDevice.status === "WAITING") {
@@ -189,14 +135,13 @@ const unixServer = net.createServer(socket => {
             }, []);
             console.log('DEVICES ARRAY ', devices);
         }
-        /*
+        
         if(alreadyDiscoveredDevice && alreadyDiscoveredDevice.status === "REGISTERED") {
             const data = JSON.stringify(obj);
             const msg = new message(data);
             msg.properties.add("type", "telemetry");
-            client.sendEvent(msg, printResultFor("send"));
-            
-        }*/
+            client.sendEvent(msg, printResultFor("send"));   
+        }
     });
 });
 
