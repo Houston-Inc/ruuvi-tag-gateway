@@ -11,24 +11,8 @@ var {edgeDeviceConnectionString, c2DConnectionString, primaryKey, iotHub} = requ
 const client = deviceClient.fromConnectionString(edgeDeviceConnectionString, mqtt);
 const currentEdgeDeviceId = process.env.EDGEDEVICEID;
 
-let ruuvitags = [];
 let devices = [];
-// TODO: LIST OF DEVICES TO BE REGISTERED
-/**
- * {
- *  device: ...
- *  numOfRetire: 1-...
- * }
- */
-/*
-{
-    address: ""
-    uuid: LATER
-    status: enum(REGISTERED, WAITING, DENIED, ERROR)
-    telemetry: {}
-    deviceTwin : {}
-}
-*/
+
 const printResultFor = op => {
     return (err, res) => {
         if (err) console.log(op + " error: " + err.toString());
@@ -36,35 +20,22 @@ const printResultFor = op => {
     };
 }
 
-
 const printError = err => {
     console.log(err.message);
 };
 
 const handleMessage = iotHubMsg => {
     const attemptedDeviceRegistration = iotHubMsg.applicationProperties.type === 'DeviceRegistrationAttempted';
-    //console.log('handleMessage attemptedDeviceRegistration', attemptedDeviceRegistration);
     const { edgeDeviceId, deviceTwin, wasSuccessful, message, registrationId } = iotHubMsg.body;
-
-    console.log("\n HANDLE MESSAGE")
-    console.log("registrationId",registrationId);
-    console.log("edgeDeviceId",edgeDeviceId);
-    console.log("deviceTwin",deviceTwin);
-    console.log("first if: " + (attemptedDeviceRegistration && edgeDeviceId === currentEdgeDeviceId));
-    console.log("wasSuccessful", wasSuccessful);
-
 
     if (attemptedDeviceRegistration && edgeDeviceId === currentEdgeDeviceId) {
         devices.forEach(device => {
             if (device.address === registrationId) {
-                console.log("IT WAS TRUE");
                 if (wasSuccessful && (device.status === "WAITING" || device.status === "DENIED")) {
-                    console.log("first twin", device.deviceTwin);
                     device.status = "REGISTERED";
                     device.timeToRetry = null;
                     device.deviceTwin = deviceTwin;
                     device.deviceTwin.edgeDeviceId = currentEdgeDeviceId;
-                    console.log("second twin", device.deviceTwin);
                     openDeviceTwinConnection(registrationId, device.deviceTwin);
                 } else {
                     const timeToRetry = new Date();
@@ -99,9 +70,6 @@ const openDeviceTwinConnection = (registrationId, deviceTwin) => {
                 }
 
                 twin.on("properties.desired", desired => {
-                    //console.log("new desired properties received:");
-                    //console.log(desired);
-                    
                     let updatedDeviceTwin;
                     devices.map(d => {
                         if(d.address === registrationId) {
@@ -123,7 +91,6 @@ const openDeviceTwinConnection = (registrationId, deviceTwin) => {
                     });
                 });
 
-
                 const report = {"edgeDeviceId": deviceTwin.edgeDeviceId}
                 twin.properties.reported.update(report, (err) => {
                     if (err) throw err;
@@ -133,13 +100,6 @@ const openDeviceTwinConnection = (registrationId, deviceTwin) => {
         }
     });
 };
-
-/**
- * const data = JSON.stringify(deviceRegistrationObj);
-    const msg = new message(data);
-    msg.properties.add("type", "device-registration");
-    client.sendEvent(msg, printResultFor("send"));
- */
 
 let ehClient;
 EventHubClient.createFromIotHubConnectionString(c2DConnectionString)
@@ -160,9 +120,7 @@ EventHubClient.createFromIotHubConnectionString(c2DConnectionString)
 
 
 const unixServer = net.createServer(socket => {
-    socket.on("data", function(data) {
-       // console.log('Telemetry ',  JSON.parse(data.toString()));
-        
+    socket.on("data", function(data) {        
         let telemetry;
         try {
             telemetry= JSON.parse(data.toString());
@@ -182,7 +140,7 @@ const unixServer = net.createServer(socket => {
         };
 
         const alreadyDiscoveredDevice = devices.find(a => a.address === obj.address);
-         const deviceRegistrationObj = {
+        const deviceRegistrationObj = {
             edgeDeviceId: currentEdgeDeviceId,
             address: telemetry.device.address
         };
@@ -201,7 +159,6 @@ const unixServer = net.createServer(socket => {
         }
         
         if(alreadyDiscoveredDevice && (alreadyDiscoveredDevice.status === "WAITING" || alreadyDiscoveredDevice.status === "DENIED" )) {
-            
             devices = devices.reduce((acc ,curr) => {
                 const date = new Date()
                 if(curr === alreadyDiscoveredDevice && date > curr.timeToRetry) {
@@ -216,9 +173,7 @@ const unixServer = net.createServer(socket => {
                 acc.push(curr);
                 return acc;
             }, []);
-            //console.log('DEVICES ARRAY ', devices);
         }
-        //console.log('ALREADY ', alreadyDiscoveredDevice);
         alreadyDiscoveredDevice && console.log("alreadyDiscoveredDevice.deviceTwin", alreadyDiscoveredDevice.deviceTwin)
 
         if(alreadyDiscoveredDevice && alreadyDiscoveredDevice.deviceTwin.edgeDeviceId === currentEdgeDeviceId) {
@@ -229,7 +184,6 @@ const unixServer = net.createServer(socket => {
         }
     });
 });
-
 
 const sendRegistrationRequest = (deviceRegistrationObj) => {
     const data = JSON.stringify(deviceRegistrationObj);
@@ -245,22 +199,6 @@ const sendUpdateToDatabase = (registrationId, edgeDeviceId) => {
     msg.properties.add("type", "device-update");
     client.sendEvent(msg, printResultFor("send"));
 }
-
-/*
-setInterval(() => {
-    if(ruuvitags.length === 0) return;
-
-    // console.clear();
-    // console.log("current time:", "\t", new Date().toISOString(), "\n");
-    // console.log(ruuvitags);
-    
-    const data = JSON.stringify(ruuvitags);
-    const msg = new message(data);
-    msg.properties.add("type", "telemetry");
-    client.sendEvent(msg, printResultFor("send"));
-    
-}, 3000);
-*/
 
  setInterval(()=> {
      // console.clear();
