@@ -1,0 +1,8 @@
+FROM golang:1.13
+RUN apt-get update
+RUN apt-get install bluez -y
+RUN go get gitlab.com/jtaimisto/bluewalker
+
+COPY bluewalker.sh ./
+
+CMD ["/go/bluewalker.sh"]
