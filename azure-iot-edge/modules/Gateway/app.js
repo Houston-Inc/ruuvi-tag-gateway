@@ -7,9 +7,11 @@ const Message = require('azure-iot-device').Message;
 const net = require('net');
 const fs = require('fs');
 const crypto = require('crypto');
-const { primaryKey, iotHub } = require('./connection-strings.json');
 
-const currentEdgeDeviceId = process.env.EDGEDEVICEID;
+const currentEdgeDeviceId = process.env.EDGE_DEVICE_ID;
+const primaryKey = process.env.PRIMARY_KEY;
+const iotHub = process.env.IOT_HUB;
+
 let devices = [];
 
 // TODO: LIST OF DEVICES TO BE REGISTERED
@@ -245,7 +247,7 @@ setInterval(()=> {
 
 const createUnixServer = () => {
     try {
-       fs.unlinkSync(process.env.SOCKETPATH);
+       fs.unlinkSync(process.env.SOCKET_PATH);
     } catch (err) {} 
-    unixServer.listen(process.env.SOCKETPATH);
+    unixServer.listen(process.env.SOCKET_PATH);
 }

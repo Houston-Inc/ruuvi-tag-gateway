@@ -63,11 +63,17 @@
             "status": "running",
             "restartPolicy": "always",
             "env": {
-              "SOCKETPATH": {
+              "SOCKET_PATH": {
                 "value": "/tmp/ruuvi.sock"
               },
-              "EDGEDEVICEID": {
-                "value": "tommi-test"
+              "EDGE_DEVICE_ID": {
+                "value": "$EDGE_DEVICE_ID"
+              },
+              "PRIMARY_KEY": {
+                "value": "$PRIMARY_KEY"
+              },
+              "IOT_HUB": {
+                "value": "$IOT_HUB"
               }
             },
             "settings": {
