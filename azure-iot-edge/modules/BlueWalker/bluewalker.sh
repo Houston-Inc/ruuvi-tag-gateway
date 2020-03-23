@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 SOCKETPATH="/tmp/ruuvi.sock"
 
 hciconfig hci0 down

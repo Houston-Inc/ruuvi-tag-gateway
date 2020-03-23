@@ -1,6 +1,6 @@
 FROM golang:1.14.1-alpine
-RUN apt-get update
-RUN apt-get install bluez -y
+RUN apk update
+RUN apk add bluez-deprecated git
 RUN go get gitlab.com/jtaimisto/bluewalker
 
 COPY bluewalker.sh ./
