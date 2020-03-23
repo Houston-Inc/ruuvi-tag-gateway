@@ -2,7 +2,7 @@
     "$schema-version": "0.0.1",
     "description": "",
     "image": {
-        "repository": "localhost:5000/gateway",
+        "repository": "openiotplatform.azurecr.io/denim/gateway",
         "tag": {
             "version": "0.0.1",
             "platforms": {
