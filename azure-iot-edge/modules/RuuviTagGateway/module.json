@@ -2,7 +2,7 @@
     "$schema-version": "0.0.1",
     "description": "",
     "image": {
-        "repository": "openiotplatform.azurecr.io/denim/gateway",
+        "repository": "openiotplatform.azurecr.io/denim/ruuvi-tag-gateway",
         "tag": {
             "version": "0.0.1",
             "platforms": {

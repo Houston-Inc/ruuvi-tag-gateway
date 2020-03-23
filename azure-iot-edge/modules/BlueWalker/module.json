@@ -2,7 +2,7 @@
   "$schema-version": "0.0.1",
   "description": "",
   "image": {
-    "repository": "openiotplatform.azurecr.io/denim/bluetooth",
+    "repository": "openiotplatform.azurecr.io/denim/bluewalker",
     "tag": {
       "version": "0.0.1",
       "platforms": {
