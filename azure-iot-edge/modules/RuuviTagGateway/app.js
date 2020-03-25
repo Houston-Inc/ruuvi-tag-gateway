@@ -12,7 +12,7 @@ const currentEdgeDeviceId = process.env.EDGE_DEVICE_ID;
 const primaryKey = process.env.PRIMARY_KEY;
 const iotHub = process.env.IOT_HUB;
 
-let devices = [];
+const devices = [];
 
 // TODO: LIST OF DEVICES TO BE REGISTERED
 /**
@@ -72,7 +72,7 @@ ModuleClient.fromEnvironment(mqtt, function (err, client) {
 });
 
 const handleDeviceRegistrationMessage = iotHubMsg => {
-    const { edgeDeviceId, deviceTwin, wasSuccessful, message, registrationId } = iotHubMsg;
+    const { edgeDeviceId, deviceTwin, wasSuccessful, registrationId } = iotHubMsg;
 
     console.log("\n HANDLE MESSAGE")
     console.log("registrationId", registrationId);
@@ -80,24 +80,19 @@ const handleDeviceRegistrationMessage = iotHubMsg => {
     console.log("deviceTwin", deviceTwin);
     console.log("wasSuccessful", wasSuccessful);
 
-    devices.forEach(device => {
-        if (device.address === registrationId) {
-            if (wasSuccessful && (device.status === "WAITING" || device.status === "DENIED")) {
-                console.log("first twin", device.deviceTwin);
-                device.status = "REGISTERED";
-                device.timeToRetry = null;
-                device.deviceTwin = deviceTwin;
-                device.deviceTwin.edgeDeviceId = currentEdgeDeviceId;
-                console.log("second twin", device.deviceTwin);
-                openDeviceTwinConnection(registrationId, device.deviceTwin);
-            } else {
-                const timeToRetry = new Date();
-                timeToRetry.setHours(timeToRetry.getHours() + 1);
-                device.timeToRetry = timeToRetry;
-                device.status = "DENIED";
-            }
-        }
-    });
+    const device = devices.find((d) => { return d.address === registrationId });
+    if (wasSuccessful && (device.status === "WAITING" || device.status === "DENIED")) {
+        device.status = "REGISTERED";
+        device.timeToRetry = null;
+        device.deviceTwin = deviceTwin;
+        device.deviceTwin.edgeDeviceId = currentEdgeDeviceId;
+        openDeviceTwinConnection(registrationId, deviceTwin);
+    } else {
+        const timeToRetry = new Date();
+        timeToRetry.setHours(timeToRetry.getHours() + 1);
+        device.timeToRetry = timeToRetry;
+        device.status = "DENIED";
+    }
 };
 
 const openDeviceTwinConnection = (registrationId, deviceTwin) => {
@@ -125,27 +120,21 @@ const openDeviceTwinConnection = (registrationId, deviceTwin) => {
                     //console.log("new desired properties received:");
                     //console.log(desired);
                     
-                    let updatedDeviceTwin;
-                    devices.map(d => {
-                        if(d.address === registrationId) {
-                            d.deviceTwin = desired;
-                            if(desired.edgeDeviceId === "INITIAL") {
-                                d.deviceTwin.edgeDeviceId = currentEdgeDeviceId;
-                            }
-                            updatedDeviceTwin = d.deviceTwin;
-                        }
-                        return d;
-                    });
-                    const report = {"edgeDeviceId": updatedDeviceTwin.edgeDeviceId}
+                    const device = devices.find((d) => { return d.address === registrationId });
+                    device.deviceTwin = desired;
+                    if (desired.edgeDeviceId === "INITIAL") {
+                        device.deviceTwin.edgeDeviceId = currentEdgeDeviceId;
+                    }
 
-                    sendUpdateToDatabase(registrationId, updatedDeviceTwin.edgeDeviceId);
+                    sendUpdateToDatabase(registrationId, device.deviceTwin.edgeDeviceId);
+
+                    const report = {"edgeDeviceId": device.deviceTwin.edgeDeviceId}
 
                     twin.properties.reported.update(report, (err) => {
                         if (err) throw err;
                         console.log("twin state reported: ", report);
                     });
                 });
-
 
                 const report = {"edgeDeviceId": deviceTwin.edgeDeviceId}
                 twin.properties.reported.update(report, (err) => {
@@ -197,23 +186,19 @@ const unixServer = net.createServer(socket => {
         }
         
         if (alreadyDiscoveredDevice && (alreadyDiscoveredDevice.status === "WAITING" || alreadyDiscoveredDevice.status === "DENIED" )) {
-            
-            devices = devices.reduce((acc ,curr) => {
-                const date = new Date()
-                if(curr === alreadyDiscoveredDevice && date > curr.timeToRetry) {
-                    sendRegistrationRequest(deviceRegistrationObj);
-                    if (alreadyDiscoveredDevice.status === "WAITING") {
-                        date.setSeconds(date.getSeconds() + 15);
-                    } else {
-                        date.setHours(date.getHours() + 1);
-                    }
-                    curr.timeToRetry = date;
+
+            const date = new Date()
+            if (date > alreadyDiscoveredDevice.timeToRetry) {
+                sendRegistrationRequest(deviceRegistrationObj);
+                if (alreadyDiscoveredDevice.status === "WAITING") {
+                    date.setSeconds(date.getSeconds() + 15);
+                } else {
+                    date.setHours(date.getHours() + 1);
                 }
-                acc.push(curr);
-                return acc;
-            }, []);
+                alreadyDiscoveredDevice.timeToRetry = date;
+            }
         }
-        alreadyDiscoveredDevice && console.log("alreadyDiscoveredDevice.deviceTwin", alreadyDiscoveredDevice.deviceTwin)
+        alreadyDiscoveredDevice && console.log("alreadyDiscoveredDevice.deviceTwin", alreadyDiscoveredDevice.deviceTwin);
 
         if (alreadyDiscoveredDevice && alreadyDiscoveredDevice.deviceTwin.edgeDeviceId === currentEdgeDeviceId) {
             const data = JSON.stringify(obj);
@@ -223,7 +208,6 @@ const unixServer = net.createServer(socket => {
         }
     });
 });
-
 
 const sendRegistrationRequest = (deviceRegistrationObj) => {
     const data = JSON.stringify(deviceRegistrationObj);
@@ -240,14 +224,14 @@ const sendUpdateToDatabase = (registrationId, edgeDeviceId) => {
     moduleClient.sendEvent(msg, printResultFor("send"));
 }
 
-setInterval(()=> {
-     console.log(new Date())
-     console.log(devices);
+setInterval(() => {
+    console.log(new Date())
+    console.log(devices);
 }, 1000)
 
 const createUnixServer = () => {
     try {
-       fs.unlinkSync(process.env.SOCKET_PATH);
+        fs.unlinkSync(process.env.SOCKET_PATH);
     } catch (err) {} 
     unixServer.listen(process.env.SOCKET_PATH);
 }
