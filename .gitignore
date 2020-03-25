@@ -1,3 +1,2 @@
-node_modules
-connection-strings.json
-package-lock.json
+.vscode
+
