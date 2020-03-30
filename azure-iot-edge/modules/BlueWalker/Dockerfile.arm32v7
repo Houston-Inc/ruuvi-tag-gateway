@@ -1,8 +1,15 @@
 FROM arm32v7/golang:1.14.1-alpine
-RUN apk update
-RUN apk add bluez-deprecated git
+
+RUN apk add --update --no-cache bluez-deprecated git sudo
 RUN go get gitlab.com/jtaimisto/bluewalker
 
 COPY bluewalker.sh ./
 
+RUN addgroup -g 1000 -S oip_ug && adduser -u 1000 -S oip_user -G oip_ug
+RUN chown -R 1000:1000 /go
+
+RUN echo "oip_user ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/oip_user && \
+    chmod 0440 /etc/sudoers.d/oip_user
+
+USER oip_user
 CMD ["/go/bluewalker.sh"]
