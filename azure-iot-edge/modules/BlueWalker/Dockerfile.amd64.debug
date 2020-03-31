@@ -1,8 +1,14 @@
 FROM golang:1.14.1-alpine
-RUN apk update
-RUN apk add bluez-deprecated git
+RUN apk add --update --no-cache bluez-deprecated git sudo
 RUN go get gitlab.com/jtaimisto/bluewalker
 
 COPY bluewalker.sh ./
 
+RUN addgroup -g 1000 -S denim && adduser -u 1000 -S denim -G denim
+RUN chown -R 1000:1000 /go
+
+RUN echo "denim ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/denim && \
+    chmod 0440 /etc/sudoers.d/denim
+
+USER denim
 CMD ["/go/bluewalker.sh"]
