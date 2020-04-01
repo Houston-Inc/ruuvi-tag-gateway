@@ -7,6 +7,8 @@ const Message = require('azure-iot-device').Message;
 const net = require('net');
 const fs = require('fs');
 const crypto = require('crypto');
+const reportedPropertiesHandler = require('./reportedPropertiesHandler');
+const messageLevelHandler = require('./messageLevelHandler')
 
 const currentEdgeDeviceId = process.env.EDGE_DEVICE_ID;
 const primaryKey = process.env.PRIMARY_KEY;
@@ -14,22 +16,6 @@ const iotHub = process.env.IOT_HUB;
 
 const devices = [];
 
-// TODO: LIST OF DEVICES TO BE REGISTERED
-/**
- * {
- *  device: ...
- *  numOfRetire: 1-...
- * }
- */
-/*
-{
-    address: ""
-    uuid: LATER
-    status: enum(REGISTERED, WAITING, DENIED, ERROR)
-    telemetry: {}
-    deviceTwin : {}
-}
-*/
 const printResultFor = op => {
   return (err, res) => {
       if (err) console.log(op + " error: " + err.toString());
@@ -74,7 +60,7 @@ ModuleClient.fromEnvironment(mqtt, function (err, client) {
 const handleDeviceRegistrationMessage = iotHubMsg => {
     const { edgeDeviceId, deviceTwin, wasSuccessful, registrationId } = iotHubMsg;
 
-    console.log("\n HANDLE MESSAGE")
+    console.log("\n HANDLE MESSAGE");
     console.log("registrationId", registrationId);
     console.log("edgeDeviceId", edgeDeviceId);
     console.log("deviceTwin", deviceTwin);
@@ -84,8 +70,6 @@ const handleDeviceRegistrationMessage = iotHubMsg => {
     if (wasSuccessful && (device.status === "WAITING" || device.status === "DENIED")) {
         device.status = "REGISTERED";
         device.timeToRetry = null;
-        device.deviceTwin = deviceTwin;
-        device.deviceTwin.edgeDeviceId = currentEdgeDeviceId;
         openDeviceTwinConnection(registrationId, deviceTwin);
     } else {
         const timeToRetry = new Date();
@@ -95,7 +79,7 @@ const handleDeviceRegistrationMessage = iotHubMsg => {
     }
 };
 
-const openDeviceTwinConnection = (registrationId, deviceTwin) => {
+const openDeviceTwinConnection = (registrationId) => {
     console.log("Open device twin connection");
     const symmetricKey = crypto
         .createHmac("SHA256", Buffer.from(primaryKey, "base64"))
@@ -108,38 +92,38 @@ const openDeviceTwinConnection = (registrationId, deviceTwin) => {
     const deviceClient = DeviceClient.fromConnectionString(connectionString, mqtt);
     deviceClient.open(err => {
         if (err) {
-            console.log("error setting up device twin: ", err)
+            console.log("error setting up device twin:", err)
         } else {
-            // DEVICE TWIN
             deviceClient.getTwin((err, twin) => {
                 if (err) {
-                    console.error("error getting twin: " + err);
+                    console.error("error getting device twin:", err);
                 }
 
+                const device = devices.find(d => d.address === registrationId);
+
+                // Set the twin object to device.deviceTwin. The deviceClient handles
+                // syncing the desired properties to the twin.
+                device.deviceTwin = twin;
+
                 twin.on("properties.desired", desired => {
-                    //console.log("new desired properties received:");
-                    //console.log(desired);
+                    // console.log("new desired properties received:", JSON.stringify(desired));
                     
-                    const device = devices.find((d) => { return d.address === registrationId });
-                    device.deviceTwin = desired;
                     if (desired.edgeDeviceId === "INITIAL") {
-                        device.deviceTwin.edgeDeviceId = currentEdgeDeviceId;
+                        device.edgeDeviceId = currentEdgeDeviceId;
+                    } else {
+                        device.edgeDeviceId = desired.edgeDeviceId;
                     }
 
-                    sendUpdateToDatabase(registrationId, device.deviceTwin.edgeDeviceId);
+                    // At this point the twin has been updated. Patch of reported properties can be generated
+                    // by comparing the twins desired and reported properties
+                    const reportedPropertiesPatch = reportedPropertiesHandler.generatePatch(twin, device.edgeDeviceId);
 
-                    const report = {"edgeDeviceId": device.deviceTwin.edgeDeviceId}
-
-                    twin.properties.reported.update(report, (err) => {
-                        if (err) throw err;
-                        console.log("twin state reported: ", report);
+                    twin.properties.reported.update(reportedPropertiesPatch, (err) => {
+                        if (err) {
+                            console.log("Error updating twin state", err);
+                        }
+                        console.log("Twin state reported:", JSON.stringify(reportedPropertiesPatch));
                     });
-                });
-
-                const report = {"edgeDeviceId": deviceTwin.edgeDeviceId}
-                twin.properties.reported.update(report, (err) => {
-                    if (err) throw err;
-                    console.log("twin state reported");
                 });
             });
         }
@@ -147,7 +131,7 @@ const openDeviceTwinConnection = (registrationId, deviceTwin) => {
 };
 
 const unixServer = net.createServer(socket => {
-    socket.on("data", function(data) {        
+    socket.on("data", function(data) {
         let telemetry;
         try {
             telemetry= JSON.parse(data.toString());
@@ -155,18 +139,7 @@ const unixServer = net.createServer(socket => {
             return;
         }
 
-        const obj = {
-            address: telemetry.device.address,
-            rssi: telemetry.rssi,
-            temperature: telemetry.sensors.temperature,
-            humidity: telemetry.sensors.humidity,
-            pressure: telemetry.sensors.pressure,
-            voltage: telemetry.sensors.voltage,
-            txpower: telemetry.sensors.txpower,
-            time: new Date().toISOString()
-        };
-
-        const alreadyDiscoveredDevice = devices.find(a => a.address === obj.address);
+        const alreadyDiscoveredDevice = devices.find(d => d.address === telemetry.device.address);
         const deviceRegistrationObj = {
             edgeDeviceId: currentEdgeDeviceId,
             address: telemetry.device.address
@@ -198,12 +171,25 @@ const unixServer = net.createServer(socket => {
                 alreadyDiscoveredDevice.timeToRetry = date;
             }
         }
-        alreadyDiscoveredDevice && console.log("alreadyDiscoveredDevice.deviceTwin", alreadyDiscoveredDevice.deviceTwin);
 
-        if (alreadyDiscoveredDevice && alreadyDiscoveredDevice.deviceTwin.edgeDeviceId === currentEdgeDeviceId) {
-            const data = JSON.stringify(obj);
-            const msg = new Message(data);
+        if (alreadyDiscoveredDevice && alreadyDiscoveredDevice.edgeDeviceId === currentEdgeDeviceId) {
+
+            const telemetryData = {
+                address: telemetry.device.address,
+                rssi: telemetry.rssi,
+                temperature: telemetry.sensors.temperature,
+                humidity: telemetry.sensors.humidity,
+                pressure: telemetry.sensors.pressure,
+                voltage: telemetry.sensors.voltage,
+                txpower: telemetry.sensors.txpower,
+                time: new Date().toISOString()
+            };
+
+            const msg = new Message(JSON.stringify(telemetryData));
+
             msg.properties.add("type", "telemetry");
+            msg.properties.add("level", messageLevelHandler.resolveLevel(telemetryData, alreadyDiscoveredDevice.deviceTwin));
+            //console.log("Send msg", JSON.stringify(msg));
             moduleClient.sendEvent(msg, printResultFor("send"));
         }
     });
@@ -216,18 +202,10 @@ const sendRegistrationRequest = (deviceRegistrationObj) => {
     moduleClient.sendEvent(msg, printResultFor("send"));
 }
 
-const sendUpdateToDatabase = (registrationId, edgeDeviceId) => {
-    const ids = {registrationId, edgeDeviceId}
-    const data = JSON.stringify(ids);
-    const msg = new Message(data);
-    msg.properties.add("type", "device-update");
-    moduleClient.sendEvent(msg, printResultFor("send"));
-}
-
 setInterval(() => {
     console.log(new Date())
     console.log(devices);
-}, 1000)
+}, 1000);
 
 const createUnixServer = () => {
     try {
