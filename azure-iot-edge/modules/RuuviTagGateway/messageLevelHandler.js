@@ -5,7 +5,7 @@ const resolveLevel = (telemetryData, deviceTwin) => {
     if (matchesSomeRule(telemetryData, deviceTwin.properties.desired.warnings)) {
         return "warning";
     }
-    return "info";
+    return "normal";
 }
 
 const matchesSomeRule = (telemetryData, rules) => {

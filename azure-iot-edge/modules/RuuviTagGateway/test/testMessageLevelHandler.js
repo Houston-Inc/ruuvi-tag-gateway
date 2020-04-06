@@ -40,7 +40,7 @@ const twin = {
 
 describe('Message level', function() {
 
-  it('is info if no rules match', function() {
+  it('is normal if no rules match', function() {
     const telemetryData = {
       temperature: 23,
       humidity: 30
@@ -48,7 +48,7 @@ describe('Message level', function() {
 
     const level = messageLevelHandler.resolveLevel(telemetryData, twin);
 
-    assert.equal(level, "info");
+    assert.equal(level, "normal");
   });
 
   it('is warning if a warning rule matches', function() {
@@ -73,7 +73,7 @@ describe('Message level', function() {
     assert.equal(level, "alert");
   });
 
-  it("is info if only one sub-rule of an alert rule matches", function() {
+  it("is normal if only one sub-rule of an alert rule matches", function() {
     const telemetryData = {
       temperature: 14,
       humidity: 16
@@ -81,7 +81,7 @@ describe('Message level', function() {
 
     const level = messageLevelHandler.resolveLevel(telemetryData, twin);
 
-    assert.equal(level, "info");
+    assert.equal(level, "normal");
   });
 
   it("is alert if all sub-rules of an alert rule matches", function() {

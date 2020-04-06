@@ -70,7 +70,7 @@ const handleDeviceRegistrationMessage = iotHubMsg => {
     if (wasSuccessful && (device.status === "WAITING" || device.status === "DENIED")) {
         device.status = "REGISTERED";
         device.timeToRetry = null;
-        openDeviceTwinConnection(registrationId, deviceTwin);
+        openDeviceTwinConnection(registrationId);
     } else {
         const timeToRetry = new Date();
         timeToRetry.setHours(timeToRetry.getHours() + 1);
