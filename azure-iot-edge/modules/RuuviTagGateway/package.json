@@ -1,8 +1,14 @@
 {
     "name": "ruuvi-tag-gateway",
     "version": "0.0.1",
+    "scripts": {
+        "test": "mocha"
+    },
     "dependencies": {
         "azure-iot-device": "^1.7.0",
         "azure-iot-device-mqtt": "^1.7.0"
+    },
+    "devDependencies": {
+        "mocha": "^7.1.1"
     }
 }
