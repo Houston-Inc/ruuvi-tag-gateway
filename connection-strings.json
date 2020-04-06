@@ -1,6 +1,0 @@
-{
-    "edgeDeviceConnectionString": "HostName=weuoiotphub.azure-devices.net;DeviceId=HoustonJacksonNano;SharedAccessKey=tsDCaYlSOyWA2sLIxDtS7N57LdGsqyJe2KbYYut9VNo=",
-    "c2DConnectionString": "HostName=weuoiotphub.azure-devices.net;SharedAccessKeyName=iothubowner;SharedAccessKey=2ql1TFHg9HKv6eCixC8t9qjGNXQ72ubyaikHn9i3lMc=",
-    "primaryKey": "3lElG5L9jtEXeGLSQg5y27WFGWh2bcKjOTgqGZI90ooLN+uVzbKDeTX+R0yiEda5lA95na01SYm4wZMnG2RbCg==",
-    "iotHub": "weuoiotphub.azure-devices.net"
-}
