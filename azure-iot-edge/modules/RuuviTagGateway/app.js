@@ -108,7 +108,7 @@ const openDeviceTwinConnection = (registrationId) => {
                 twin.on("properties.desired", desired => {
                     // console.log("new desired properties received:", JSON.stringify(desired));
                     
-                    if (desired.edgeDeviceId === "INITIAL") {
+                    if (desired.edgeDeviceId === "INITIAL" || !desired.edgeDeviceId) {
                         device.edgeDeviceId = currentEdgeDeviceId;
                     } else {
                         device.edgeDeviceId = desired.edgeDeviceId;
