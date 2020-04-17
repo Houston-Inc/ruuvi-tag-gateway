@@ -108,7 +108,7 @@ const openDeviceTwinConnection = (registrationId) => {
                 twin.on("properties.desired", desired => {
                     // console.log("new desired properties received:", JSON.stringify(desired));
                     
-                    if (desired.edgeDeviceId === "INITIAL") {
+                    if (desired.edgeDeviceId === "INITIAL" || !desired.edgeDeviceId) {
                         device.edgeDeviceId = currentEdgeDeviceId;
                     } else {
                         device.edgeDeviceId = desired.edgeDeviceId;
@@ -203,9 +203,9 @@ const sendRegistrationRequest = (deviceRegistrationObj) => {
 }
 
 setInterval(() => {
-    console.log(new Date())
-    console.log(devices);
-}, 1000);
+    console.log(new Date());
+    console.log(devices.map((d) => { return d.address + ": " + d.status }));
+}, 2000);
 
 const createUnixServer = () => {
     try {
