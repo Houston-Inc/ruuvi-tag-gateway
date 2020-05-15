@@ -190,7 +190,7 @@ const unixServer = net.createServer(socket => {
                 humidity: telemetry.sensors.humidity,
                 pressure: telemetry.sensors.pressure,
                 voltage: telemetry.sensors.voltage,
-                txpower: telemetry.sensors.txpower,
+                tx_power: telemetry.sensors.txpower,
                 time: new Date().toISOString()
             };
 
