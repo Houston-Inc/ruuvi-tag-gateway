@@ -67,6 +67,10 @@ const handleDeviceRegistrationMessage = iotHubMsg => {
     console.log("wasSuccessful", wasSuccessful);
 
     const device = devices.find((d) => { return d.address === registrationId });
+    if (!device) {
+        console.log(`Device with id ${registrationId} not found`);
+        return
+    }
     if (wasSuccessful && (device.status === "WAITING" || device.status === "DENIED")) {
         device.status = "REGISTERED";
         device.timeToRetry = null;
