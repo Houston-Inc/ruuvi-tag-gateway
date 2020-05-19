@@ -16,6 +16,9 @@ const iotHub = process.env.IOT_HUB;
 
 const devices = [];
 
+const MODULE_NAME = "RuuviTagGateway";
+const DEVICE_REGISTRATION_METHOD_NAME = "DeviceRegistrationAttempted";
+
 const printResultFor = op => {
   return (err, res) => {
       if (err) console.log(op + " error: " + err.toString());
@@ -33,14 +36,14 @@ ModuleClient.fromEnvironment(mqtt, function (err, client) {
       throw err;
     });
 
-    client.onMethod('DeviceRegistrationAttempted', function(request, response) {
-        console.log('DeviceRegistrationAttempted method called', request);
+    client.onMethod(DEVICE_REGISTRATION_METHOD_NAME, function(request, response) {
+        console.log(`${DEVICE_REGISTRATION_METHOD_NAME} method called`, request);
         handleDeviceRegistrationMessage(request.payload);
         response.send(200, "", function(err) {
             if (err) {
-                console.log('Error sending response to DeviceRegistrationAttempted method', err);
+                console.log(`Error sending response to ${DEVICE_REGISTRATION_METHOD_NAME} method`, err);
             } else {
-                console.log('Response to DeviceRegistrationAttempted method sent successfully.');
+                console.log(`Response to ${DEVICE_REGISTRATION_METHOD_NAME} method sent successfully`);
             }
         });
     });
@@ -67,6 +70,10 @@ const handleDeviceRegistrationMessage = iotHubMsg => {
     console.log("wasSuccessful", wasSuccessful);
 
     const device = devices.find((d) => { return d.address === registrationId });
+    if (!device) {
+        console.log(`Device with id ${registrationId} not found`);
+        return
+    }
     if (wasSuccessful && (device.status === "WAITING" || device.status === "DENIED")) {
         device.status = "REGISTERED";
         device.timeToRetry = null;
@@ -134,7 +141,7 @@ const unixServer = net.createServer(socket => {
     socket.on("data", function(data) {
         let telemetry;
         try {
-            telemetry= JSON.parse(data.toString());
+            telemetry = JSON.parse(data.toString());
         } catch (ex) {
             return;
         }
@@ -142,7 +149,9 @@ const unixServer = net.createServer(socket => {
         const alreadyDiscoveredDevice = devices.find(d => d.address === telemetry.device.address);
         const deviceRegistrationObj = {
             edgeDeviceId: currentEdgeDeviceId,
-            address: telemetry.device.address
+            address: telemetry.device.address,
+            callbackModule: MODULE_NAME,
+            callbackMethod: DEVICE_REGISTRATION_METHOD_NAME
         };
         if (!alreadyDiscoveredDevice) {
             const timeToRetry = new Date();
@@ -181,7 +190,7 @@ const unixServer = net.createServer(socket => {
                 humidity: telemetry.sensors.humidity,
                 pressure: telemetry.sensors.pressure,
                 voltage: telemetry.sensors.voltage,
-                txpower: telemetry.sensors.txpower,
+                tx_power: telemetry.sensors.txpower,
                 time: new Date().toISOString()
             };
 
