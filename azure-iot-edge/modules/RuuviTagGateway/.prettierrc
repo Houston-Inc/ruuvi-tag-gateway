@@ -1,10 +1,7 @@
 {
   "arrowParens": "avoid",
   "bracketSpacing": false,
-  "htmlWhitespaceSensitivity": "css",
   "insertPragma": false,
-  "jsxBracketSameLine": false,
-  "jsxSingleQuote": false,
   "printWidth": 80,
   "proseWrap": "always",
   "requirePragma": false,
