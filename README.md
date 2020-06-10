@@ -11,6 +11,7 @@ https://docs.microsoft.com/en-us/azure/iot-edge/how-to-vs-code-develop-module
 Create a file azure-iot-edge/.env with the following contents:
 
 ```
+IOTEDGE_DEVICEID=<edge device id in the iot-hub>
 PRIMARY_KEY=<primary key of the enrollment group in the device provisioning service>
 IOT_HUB=<iot-hub url, e.g. weuoiotphub.azure-devices.net>
 CONTAINER_REGISTRY_USERNAME=<container-registry username>

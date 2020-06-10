@@ -66,8 +66,8 @@
               "SOCKET_PATH": {
                 "value": "/tmp/ruuvi.sock"
               },
-              "EDGE_DEVICE_ID": {
-                "value": "$EDGE_DEVICE_ID"
+              "IOTEDGE_DEVICEID": {
+                "value": "$IOTEDGE_DEVICEID"
               },
               "PRIMARY_KEY": {
                 "value": "$PRIMARY_KEY"
