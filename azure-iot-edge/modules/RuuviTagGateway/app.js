@@ -36,21 +36,18 @@ ModuleClient.fromEnvironment(mqtt, function (err, client) {
       throw err;
     });
 
-    client.onMethod(DEVICE_REGISTRATION_METHOD_NAME, function (
-      request,
-      response,
-    ) {
+    client.onMethod(DEVICE_REGISTRATION_METHOD_NAME, (request, response) => {
       console.log(`${DEVICE_REGISTRATION_METHOD_NAME} method called`, request);
       handleDeviceRegistrationMessage(request.payload);
       response.send(200, '', function (err) {
         if (err) {
           console.log(
             `Error sending response to ${DEVICE_REGISTRATION_METHOD_NAME} method`,
-            err,
+            err
           );
         } else {
           console.log(
-            `Response to ${DEVICE_REGISTRATION_METHOD_NAME} method sent successfully`,
+            `Response to ${DEVICE_REGISTRATION_METHOD_NAME} method sent successfully`
           );
         }
       });
@@ -116,7 +113,7 @@ const openDeviceTwinConnection = registrationId => {
 
   const deviceClient = DeviceClient.fromConnectionString(
     connectionString,
-    mqtt,
+    mqtt
   );
   deviceClient.open(err => {
     if (err) {
@@ -146,7 +143,7 @@ const openDeviceTwinConnection = registrationId => {
           // by comparing the twins desired and reported properties
           const reportedPropertiesPatch = reportedPropertiesHandler.generatePatch(
             twin,
-            device.edgeDeviceId,
+            device.edgeDeviceId
           );
 
           twin.properties.reported.update(reportedPropertiesPatch, err => {
@@ -155,7 +152,7 @@ const openDeviceTwinConnection = registrationId => {
             }
             console.log(
               'Twin state reported:',
-              JSON.stringify(reportedPropertiesPatch),
+              JSON.stringify(reportedPropertiesPatch)
             );
           });
         });
@@ -174,13 +171,13 @@ const unixServer = net.createServer(socket => {
     }
 
     const alreadyDiscoveredDevice = devices.find(
-      d => d.address === telemetry.device.address,
+      d => d.address === telemetry.device.address
     );
     const deviceRegistrationObj = {
       edgeDeviceId: currentEdgeDeviceId,
       address: telemetry.device.address,
       callbackModule: MODULE_NAME,
-      callbackMethod: DEVICE_REGISTRATION_METHOD_NAME,
+      callbackMethod: DEVICE_REGISTRATION_METHOD_NAME
     };
     if (!alreadyDiscoveredDevice) {
       const timeToRetry = new Date();
@@ -189,7 +186,7 @@ const unixServer = net.createServer(socket => {
         status: 'WAITING',
         address: telemetry.device.address,
         timeToRetry: timeToRetry,
-        deviceTwin: {},
+        deviceTwin: {}
       };
       devices.push(device);
       // for the device we have to wait 15 seconds to see the status and if its WAITING then RETRY
@@ -225,7 +222,7 @@ const unixServer = net.createServer(socket => {
         pressure: telemetry.sensors.pressure,
         voltage: telemetry.sensors.voltage,
         tx_power: telemetry.sensors.txpower,
-        time: new Date().toISOString(),
+        time: new Date().toISOString()
       };
 
       const msg = new Message(JSON.stringify(telemetryData));
@@ -235,8 +232,8 @@ const unixServer = net.createServer(socket => {
         'level',
         messageLevelHandler.resolveLevel(
           telemetryData,
-          alreadyDiscoveredDevice.deviceTwin,
-        ),
+          alreadyDiscoveredDevice.deviceTwin
+        )
       );
       //console.log("Send msg", JSON.stringify(msg));
       moduleClient.sendEvent(msg, printResultFor('send'));
@@ -256,7 +253,7 @@ setInterval(() => {
   console.log(
     devices.map(d => {
       return d.address + ': ' + d.status;
-    }),
+    })
   );
 }, 2000);
 

@@ -1,4 +1,4 @@
-const reportedPropertiesHandler = require("../reportedPropertiesHandler");
+const reportedPropertiesHandler = require('../reportedPropertiesHandler');
 const assert = require('assert');
 
 const twin = {
@@ -6,8 +6,8 @@ const twin = {
     desired: {
       alerts: {
         existingRule: {},
-        existingRuleWithNewSubRule: { rule1: {}, rule2: {} },
-        existingRuleWithRemovedSubRule: { rule1: {} },
+        existingRuleWithNewSubRule: {rule1: {}, rule2: {}},
+        existingRuleWithRemovedSubRule: {rule1: {}},
         newRule: {}
       },
       warnings: {
@@ -17,33 +17,35 @@ const twin = {
     reported: {
       alerts: {
         existingRule: {},
-        existingRuleWithNewSubRule: { rule1: {} },
-        existingRuleWithRemovedSubRule: { rule1: {}, rule2: {} },
+        existingRuleWithNewSubRule: {rule1: {}},
+        existingRuleWithRemovedSubRule: {rule1: {}, rule2: {}},
         removedRule: {}
       }
     }
   }
-}
+};
 
-describe('Reported properties handler', function() {
-
-    it('generates reported properties patch', function() {
-      const expectedPatch = {
-        edgeDeviceId: "edge-device",
-        alerts: {
-          existingRule: {},
-          existingRuleWithNewSubRule: { rule1: {}, rule2: {} },
-          existingRuleWithRemovedSubRule: { rule1: {}, rule2: null },
-          newRule: {},
-          removedRule: null
-        },
-        warnings: {
-          newRule: {}
-        }
+describe('Reported properties handler', function () {
+  it('generates reported properties patch', function () {
+    const expectedPatch = {
+      edgeDeviceId: 'edge-device',
+      alerts: {
+        existingRule: {},
+        existingRuleWithNewSubRule: {rule1: {}, rule2: {}},
+        existingRuleWithRemovedSubRule: {rule1: {}, rule2: null},
+        newRule: {},
+        removedRule: null
+      },
+      warnings: {
+        newRule: {}
       }
+    };
 
-      const actualPatch = reportedPropertiesHandler.generatePatch(twin, "edge-device");
+    const actualPatch = reportedPropertiesHandler.generatePatch(
+      twin,
+      'edge-device'
+    );
 
-      assert.deepEqual(actualPatch, expectedPatch);
-    });
+    assert.deepEqual(actualPatch, expectedPatch);
+  });
 });
