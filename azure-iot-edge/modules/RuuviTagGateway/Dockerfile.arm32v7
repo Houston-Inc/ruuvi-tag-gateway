@@ -1,0 +1,13 @@
+FROM arm32v7/node:13.12.0-buster
+
+WORKDIR /app/
+
+COPY package*.json ./
+
+RUN npm install --production
+
+COPY *.js ./
+
+USER node
+
+CMD ["node", "app.js"]
